@@ -1,19 +1,16 @@
 'use strict';
 
-var Generator = require('yeoman-generator');
-var chalk = require('chalk');
-var mkdirp = require('mkdirp');
-var optional = require('optional');
-var _s = require('underscore.string');
-var yosay = require('yosay');
-var path = require('path');
+const Generator = require('yeoman-generator');
+const _s = require('underscore.string');
+const yosay = require('yosay');
+const editjson = require('edit-json-file');
 
 module.exports = class extends Generator {
 
 	constructor(args, opts) {
 
 		// Calling the super constructor is important so our generator is correctly set up
-	    super(args, opts);
+		super(args, opts);
 
 		this.pkg = require('../../package.json');
 
@@ -22,7 +19,17 @@ module.exports = class extends Generator {
 
 	}
 
+	initializing() {
+
+		// If we need to do anything before prompting.
+		// Checking project state, getting configs, etc.
+
+	}
+
 	prompting() {
+
+		// Ask the people what they want.
+
 		var done = this.async();
 
 		var prompts = [{
@@ -32,9 +39,9 @@ module.exports = class extends Generator {
 			default: 'static'
 		}, {
 			type: 'input',
-			name: 'appversion',
-			message: 'Version of App',
-			default: '0.0.1'
+			name: 'stash',
+			message: 'Stash Repository Clone URL (SSH .git) (Optional)',
+			default: ''
 		}, {
 			type: 'input',
 			name: 'deployDirectory',
@@ -44,118 +51,83 @@ module.exports = class extends Generator {
 
 		return this.prompt(prompts).then(function (answers) {
 			this.appname = answers.appname;
-			this.appversion = answers.appversion;
+			this.appslug = _s.slugify(answers.appname);
+			this.stash = answers.stash;
 			this.deployDirectory = answers.deployDirectory;
 
 			done();
 		}.bind(this));
 	}
 
+	configuring() {
+
+		//
+		// Save configurations and configure the actual project
+		//
+
+		// Grab reference to the project scaffold package.json
+		this.scaffoldPJ = editjson(this.templatePath('../../../node_modules/brei-project-scaffold/package.json'));
+
+		// Build out new package.json using scaffold values, plus new stuff if we need any.
+		this.newPJ = editjson(this.destinationPath('.') + '/package.json');
+		this.newPJ.set('name', this.appslug);
+		this.newPJ.set('version', '1.0.0');
+		this.newPJ.set('description', this.scaffoldPJ.get('description'));
+		this.newPJ.set('author', this.scaffoldPJ.get('author'));
+		this.newPJ.set('license', this.scaffoldPJ.get('license'));
+		this.newPJ.set('dependencies', this.scaffoldPJ.get('dependencies'));
+		this.newPJ.set('devDependencies', this.scaffoldPJ.get('devDependencies'));
+		this.newPJ.set('scripts', this.scaffoldPJ.get('scripts'));
+
+		if (this.stash !== '') {
+			this.newPJ.set('repository', {
+				'type': 'git',
+				'url': this.stash
+			});
+		}
+
+		// Basic brei config with values we need for various things.
+		// I use this for a command line thing and like keeping custom stuff out of the package.json. - Ian
+		this.breiJ = editjson(this.destinationPath('.') + '/_config/_brei.json');
+		this.breiJ.set('generatorVersion', this.genver);
+
+	}
+
 	writing() {
 
-		mkdirp('app');
-		// All the grunt configuration files
-		mkdirp('grunt-config');
-		// Assembled HTML
-		mkdirp('app/modules');
-		// Compiled CSS
-		mkdirp('app/css');
-		// Your scripts
-		mkdirp('app/js');
-		mkdirp('app/js/plugins');
-		mkdirp('app/js/modules');
-		mkdirp('app/js/lib');
-		// Images
-		mkdirp('app/img');
+		// Write generator specific files
 
-		// modernizrJSON() {
-			this.fs.copyTpl(
-				this.templatePath('_modernizr-config.json'),
-				this.destinationPath('modernizr-config.json'),
-				{}
-			);
-		// },
+		this.fs.copy(
+			this.templatePath('gitignore'),
+			this.destinationPath('.gitignore')
+		);
 
-		// projectFiles() {
-			this.fs.copyTpl(
-				this.templatePath('jshintrc'),
-				this.destinationPath('.jshintrc'),
-				{}
-			);
-
-			this.fs.copyTpl(
-				this.templatePath('bowerrc'),
-				this.destinationPath('.bowerrc'),
-				{}
-			);
-		// },
-
-		// packageJSON() {
-			this.fs.copyTpl(
-				this.templatePath('_package.json'),
-				this.destinationPath('package.json'),
-				{
-					appname: _s.slugify(this.appname),
-					appversion: this.appversion
+		// brei-project-scaffold
+		var scaffoldJson = this.fs.readJSON(
+			this.templatePath('../../../node_modules/brei-project-scaffold/package.json')
+		);
+		this.breiJ.set('brei-project-scaffold', scaffoldJson.version);
+		this.fs.copy(
+			this.templatePath('../../../node_modules/brei-project-scaffold/**/*'),
+			this.destinationPath('.'),
+			{
+				globOptions: {
+					'dot': true
 				}
-			);
-		// },
+			}
+		);
 
-		// breiJSON() {
-			this.fs.copyTpl(
-				this.templatePath('_brei-config.json'),
-				this.destinationPath('brei-config.json'),
-				{
-					genver: this.genver,
-					appname: _s.slugify(this.appname),
-					appversion: this.appversion,
-					deployDirectory: this.deployDirectory,
-					debug: this.debug
-				}
-			);
-		// },
-
-		// git() {
-			this.fs.copy(
-				this.templatePath('gitignore'),
-				this.destinationPath('.gitignore')
-			);
-		// },
-
-		// bower() {
-			this.fs.copyTpl(
-				this.templatePath('_bower.json'),
-				this.destinationPath('bower.json'),
-				{
-					appname: _s.slugify(this.appname),
-					appversion: this.appversion
-				}
-			);
-		// },
-
-		// shell() {
-			this.fs.copyTpl(
-				this.templatePath('postsh'),
-				this.destinationPath('post.sh'),
-				{}
-			);
-		// }
-
-		// Copy over the BarkleyREI stuff
-		this.log('Now we copy over all the BarkleyREI sub-repos...');
+		// Cleanup
+		this.fs.delete(this.destinationPath('package.json'));
 
 		// brei-sass-boilerplate
 		var sassJson = this.fs.readJSON(
 			this.templatePath('../../../node_modules/brei-sass-boilerplate/package.json')
 		);
-		this.sassversion = sassJson.version;
-		this.fs.copy(
-			this.templatePath('../../../node_modules/brei-sass-boilerplate/.scss-lint.yml'),
-			this.destinationPath('.scss-lint.yml')
-		);
+		this.breiJ.set('brei-sass-boilerplate', sassJson.version);
 		this.fs.copy(
 			this.templatePath('../../../node_modules/brei-sass-boilerplate/**/*'),
-			this.destinationPath('app/sass/'),
+			this.destinationPath('app/scss/'),
 			{
 				globOptions: {
 					'dot': true
@@ -167,29 +139,10 @@ module.exports = class extends Generator {
 		var mixinJson = this.fs.readJSON(
 			this.templatePath('../../../node_modules/brei-sass-mixins/package.json')
 		);
-		this.mixinversion = mixinJson.version;
+		this.breiJ.set('brei-sass-mixins', mixinJson.version);
 		this.fs.copy(
 			this.templatePath('../../../node_modules/brei-sass-mixins/*.scss'),
-			this.destinationPath('app/sass/helpers/mixins/'),
-			{
-				globOptions: {
-					'dot': true
-				}
-			}
-		);
-
-		// brei-grunt-config
-		var gruntJson = this.fs.readJSON(
-			this.templatePath('../../../node_modules/brei-grunt-config/package.json')
-		);
-		this.gruntversion = gruntJson.version;
-		this.fs.copy(
-			this.templatePath('../../../node_modules/brei-grunt-config/Gruntfile.js'),
-			this.destinationPath('Gruntfile.js')
-		);
-		this.fs.copy(
-			this.templatePath('../../../node_modules/brei-grunt-config/grunt-config/*.js'),
-			this.destinationPath('./grunt-config/'),
+			this.destinationPath('app/scss/helpers/mixins/'),
 			{
 				globOptions: {
 					'dot': true
@@ -201,7 +154,7 @@ module.exports = class extends Generator {
 		var assembleJson = this.fs.readJSON(
 			this.templatePath('../../../node_modules/brei-assemble-structure/package.json')
 		);
-		this.assembleversion = assembleJson.version;
+		this.breiJ.set('brei-assemble-structure', assembleJson.version);
 		this.fs.copy(
 			this.templatePath('../../../node_modules/brei-assemble-structure/**/*'),
 			this.destinationPath('app/assemble/'),
@@ -216,7 +169,7 @@ module.exports = class extends Generator {
 		var helpersJson = this.fs.readJSON(
 			this.templatePath('../../../node_modules/brei-assemble-helpers/package.json')
 		);
-		this.helperversion = helpersJson.version;
+		this.breiJ.set('brei-assemble-helpers', helpersJson.version);
 		this.fs.copy(
 			this.templatePath('../../../node_modules/brei-assemble-helpers/helpers.js'),
 			this.destinationPath('app/assemble/helpers/helpers.js'),
@@ -237,35 +190,32 @@ module.exports = class extends Generator {
 		);
 
 		// Delete crap we don't need
-		this.fs.delete(this.destinationPath('app/sass/README.md'));
-		this.fs.delete(this.destinationPath('app/sass/package.json'));
-		this.fs.delete(this.destinationPath('app/sass/.travis.yml'));
-		this.fs.delete(this.destinationPath('app/sass/.scss-lint.yml'));
+		this.fs.delete(this.destinationPath('app/scss/README.md'));
+		this.fs.delete(this.destinationPath('app/scss/package.json'));
+		this.fs.delete(this.destinationPath('app/scss/.travis.yml'));
+		this.fs.delete(this.destinationPath('app/scss/.gitkeep'));
+		this.fs.delete(this.destinationPath('app/scss/icons/.gitkeep'));
+		this.fs.delete(this.destinationPath('app/scss/.stylelintignore'));
+		this.fs.delete(this.destinationPath('app/scss/.stylelintrc.json'));
+		this.fs.delete(this.destinationPath('app/scss/.github/'));
+		this.fs.delete(this.destinationPath('app/scss/test/'));
 		this.fs.delete(this.destinationPath('app/assemble/README.md'));
 		this.fs.delete(this.destinationPath('app/assemble/package.json'));
-		this.fs.delete(this.destinationPath('app/assemble/**/*/.gitkeep'),
-		{
-			globOptions: {
-				'nodir': true
-			}
-		});
-
-		this.fs.copyTpl(
-			this.templatePath('README.md'),
-			this.destinationPath('README.md'),
-			{
-				appname: _s.slugify(this.appname),
-				sassversion: this.sassversion,
-				mixinversion: this.mixinversion,
-				gruntversion: this.gruntversion,
-				assembleversion: this.assembleversion,
-				helperversion: this.helperversion
-			}
-		);
+		this.fs.delete(this.destinationPath('app/assemble/.github/'));
+		this.fs.delete(this.destinationPath('app/assemble/.gitkeep'));
+		this.fs.delete(this.destinationPath('app/assemble/.travis.yml'));
+		this.fs.delete(this.destinationPath('app/assemble/test/'));
+		this.fs.delete(this.destinationPath('app/assemble/**/*/.gitkeep'));
 
 	}
 
 	install() {
+
+		// Installations are run
+
+		this.newPJ.save();
+		this.breiJ.save();
+
 		this.installDependencies({
 			skipInstall: this.options['skip-install'],
 			skipMessage: this.options['skip-install-message'],
@@ -275,9 +225,11 @@ module.exports = class extends Generator {
 
 	end() {
 
+		// Cleanup, say goodbye
+
 		if (this.options['skip-install']) {
 			this.log(yosay(
-				'Make sure to run `npm install` and `bower install` to install all your dependencies! Happy coding!\n\n' +
+				'Make sure to run `npm install` to install all your dependencies! Happy coding!\n\n' +
 				'Generated with v' + this.pkg.version
 			));
 		} else {
@@ -286,8 +238,6 @@ module.exports = class extends Generator {
 				'Generated with v' + this.pkg.version
 			));
 		}
-
-		return;
 
 	}
 };

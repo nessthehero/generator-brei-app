@@ -60,26 +60,26 @@ module.exports = class extends Generator {
 				switch (answer.command) {
 					case 'Create a Partial':
 						this.answer = 'partial';
-						// this.composeWith('brei-app:partial', {});
+						// this.composeWith('new-app:partial', {});
 						break;
 					case 'Create a Module':
 						this.answer = 'module';
-						// this.composeWith('brei-app:module', {});
+						// this.composeWith('new-app:module', {});
 						break;
 					case 'Create a Template':
 						this.answer = 'template';
-						// this.composeWith('brei-app:template', {});
+						// this.composeWith('new-app:template', {});
 						break;
 					// case 'Import a Pattern':
 						// this.answer = 'pattern';
-						// this.composeWith('brei-app:pattern', {});
+						// this.composeWith('new-app:pattern', {});
 						// break;
 					// case 'Update Your Project':
 						// this.answer = 'update';
-						// this.composeWith('brei-app:update', {});
+						// this.composeWith('new-app:update', {});
 						// break;
 					default: //'Create a New Project'
-						// this.composeWith('brei-app:new');
+						// this.composeWith('new-app:new');
 						break;
 				}
 
@@ -91,6 +91,6 @@ module.exports = class extends Generator {
 	}
 
 	install() {
-		this.composeWith('brei-app:' + this.answer);
+		this.composeWith('new-app:' + this.answer);
 	}
 };
