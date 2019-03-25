@@ -181,7 +181,7 @@ module.exports = class extends Generator {
 		);
 		this.fs.copy(
 			this.templatePath('../../../node_modules/brei-assemble-helpers/updateScss.js'),
-			this.destinationPath('app/lib/updateScss.js'),
+			this.destinationPath('lib/updateScss.js'),
 			{
 				globOptions: {
 					'dot': true
