@@ -134,6 +134,15 @@ module.exports = class extends Generator {
 				}
 			}
 		);
+		this.fs.copy(
+			this.templatePath('../../../node_modules/brei-sass-boilerplate/.stylelintrc.json'),
+			this.destinationPath('_config/.stylelintrc.json'),
+			{
+				globOptions: {
+					'dot': true
+				}
+			}
+		);
 
 		// brei-sass-mixins
 		var mixinJson = this.fs.readJSON(
