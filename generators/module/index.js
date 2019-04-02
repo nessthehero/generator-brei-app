@@ -66,7 +66,7 @@ module.exports = class extends Generator {
 
 		this.fs.copyTpl(
 			this.templatePath('module.scss'),
-			this.destinationPath('app/sass/modules/_' + this.name + '.scss'),
+			this.destinationPath('app/scss/modules/_' + this.name + '.scss'),
 			{
 				aria: this.aria,
 				tag: this.tag,
@@ -88,7 +88,7 @@ module.exports = class extends Generator {
 
 		this.fs.copyTpl(
 			this.templatePath('partial.scss'),
-			this.destinationPath('app/sass/partials/_' + this.name + '.scss'),
+			this.destinationPath('app/scss/partials/_' + this.name + '.scss'),
 			{
 				aria: this.aria,
 				tag: this.tag,

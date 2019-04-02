@@ -14,14 +14,14 @@ var build_error_stdout = '';
 
 /**
  * Test basic file generation,
- * including that from brei-assemble-structure, brei-assemble-helpers, brei-sass-boilerplate, and brei-grunt-configs.
+ * including that from brei-assemble-structure, brei-assemble-helpers, brei-sass-boilerplate.
  */
 describe('Main Generator', function () {
 	'use strict';
 
 	before(function mainGenerator(done) {
 		var tdir = path.join(os.tmpdir(), './temp');
-		this.timeout(240000);
+		this.timeout(120000);
 
 		console.log('\nRunning a generator with npm install. This might take a while...\n\n');
 
@@ -34,11 +34,11 @@ describe('Main Generator', function () {
 				'deployDirectory': 'web'
 			})
 			.on('end', function () {
-				console.log('\nRunning grunt and grunt deploy');
+				console.log('\nRunning npm run build and npm run deploy');
 				console.log('------------');
 				console.log('Buckle up, this might take 45 - 60 seconds\n');
 
-				exec('grunt check && grunt build && grunt deploy', {
+				exec('npm run build && npm run deploy', {
 					cwd: tdir
 				}, function (error, stdout, stderr) {
 					if (error !== null) {
@@ -68,14 +68,14 @@ describe('Main Generator', function () {
 		assert.textEqual('0', build_error_code.toString());
 	});
 
-	it('Ran grunt to build out directories', function () {
+	it('Ran npm to build out directories', function () {
 		var tdir = path.join(os.tmpdir(), './temp/');
-		util._test_brei_grunt_built_files(tdir);
+		util._test_brei_npm_built_files(tdir);
 	});
 
-	it('Grunt execute ran successfully', function () {
+	it('NPM Build ran successfully', function () {
 		var tdir = path.join(os.tmpdir(), './temp/');
-		util._test_brei_grunt_execute_files(tdir);
+		util._test_brei_npm_execute_files(tdir);
 	});
 
 	it('Created Main Files', function () {
@@ -95,12 +95,12 @@ describe('Main Generator', function () {
 
 	it('Created SASS Files', function () {
 		var tdir = path.join(os.tmpdir(), './temp/');
-		util._test_brei_sass_files(tdir);
+		util._test_brei_scss_files(tdir);
 	});
 
-	it('Created Grunt Configuration Files', function () {
+	it('Created Configuration Files', function () {
 		var tdir = path.join(os.tmpdir(), './temp/');
-		util._test_brei_grunt_config_files(tdir);
+		util._test_brei_config_files(tdir);
 	});
 });
 
