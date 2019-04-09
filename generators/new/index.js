@@ -146,6 +146,15 @@ module.exports = class extends Generator {
 				}
 			}
 		);
+		this.fs.copy(
+			this.templatePath('../../../node_modules/foundation-sites/scss/settings/_settings.scss'),
+			this.destinationPath('app/scss/_settings.scss'),
+			{
+				globOptions: {
+					'dot': true
+				}
+			}
+		);
 
 		// brei-sass-mixins
 		var mixinJson = this.fs.readJSON(
