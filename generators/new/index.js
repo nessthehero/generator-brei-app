@@ -40,7 +40,7 @@ module.exports = class extends Generator {
 		}, {
 			type: 'input',
 			name: 'stash',
-			message: 'Stash Repository Clone URL (SSH .git) (Optional)',
+			message: 'Stash Repository Clone URL (ssh:// .git) (Optional)',
 			default: ''
 		}, {
 			type: 'input',
@@ -207,6 +207,22 @@ module.exports = class extends Generator {
 				globOptions: {
 					'dot': true
 				}
+			}
+		);
+
+		// README
+		this.fs.delete(this.destinationPath('README.md'));
+		this.fs.copyTpl(
+			this.templatePath('../../../node_modules/brei-project-scaffold/README.md'),
+			this.destinationPath('README.md'),
+			{
+				'appname': this.appname,
+				'stashrepo': this.stash,
+				'scaffoldversion': scaffoldJson.version,
+				'sassversion': sassJson.version,
+				'mixinversion': mixinJson.version,
+				'assembleversion': assembleJson.version,
+				'helperversion': helpersJson.version,
 			}
 		);
 
