@@ -32,6 +32,11 @@ module.exports = class extends Generator {
 			name: 'aria',
 			message: 'ARIA role? (Default: none)',
 			default: ''
+		}, {
+			type: 'input',
+			name: 'script',
+			message: 'JS module? E.g. accordion (Default: none)',
+			default: ''
 		}];
 
 		return this.prompt(prompts).then(function (props) {
@@ -100,6 +105,17 @@ module.exports = class extends Generator {
 		this.fs.copyTpl(
 			this.templatePath('module.json'),
 			this.destinationPath('app/assemble/fixtures/' + this.name + '.json'),
+			{
+				aria: this.aria,
+				tag: this.tag,
+				pretty: this.pretty,
+				name: this.name
+			}
+		);
+
+		this.fs.copyTpl(
+			this.templatePath('module.js'),
+			this.destinationPath('app/ejs/modules/' + this.name + '.js'),
 			{
 				aria: this.aria,
 				tag: this.tag,
